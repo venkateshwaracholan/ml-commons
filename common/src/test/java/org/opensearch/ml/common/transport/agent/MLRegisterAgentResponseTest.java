@@ -6,14 +6,14 @@
 package org.opensearch.ml.common.transport.agent;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.opensearch.common.io.stream.BytesStreamOutput;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.core.action.ActionResponse;
@@ -24,8 +24,6 @@ import org.opensearch.core.xcontent.XContentBuilder;
 
 public class MLRegisterAgentResponseTest {
     String agentId;
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Before
     public void setUp() {
@@ -81,17 +79,18 @@ public class MLRegisterAgentResponseTest {
 
     @Test
     public void fromActionResponse_Exception() {
-        exceptionRule.expect(UncheckedIOException.class);
-        exceptionRule.expectMessage("Failed to parse ActionResponse into MLRegisterAgentResponse");
-        MLRegisterAgentResponse registerAgentResponse = new MLRegisterAgentResponse(agentId);
-        ActionResponse actionResponse = new ActionResponse() {
+        UncheckedIOException exception = assertThrows(UncheckedIOException.class, () -> {
+            MLRegisterAgentResponse registerAgentResponse = new MLRegisterAgentResponse(agentId);
+            ActionResponse actionResponse = new ActionResponse() {
 
-            @Override
-            public void writeTo(StreamOutput out) throws IOException {
-                throw new IOException();
-            }
-        };
-        MLRegisterAgentResponse.fromActionResponse(actionResponse);
+                @Override
+                public void writeTo(StreamOutput out) throws IOException {
+                    throw new IOException();
+                }
+            };
+            MLRegisterAgentResponse.fromActionResponse(actionResponse);
+        });
+        assertEquals("Failed to parse ActionResponse into MLRegisterAgentResponse", exception.getMessage());
     }
 
 }

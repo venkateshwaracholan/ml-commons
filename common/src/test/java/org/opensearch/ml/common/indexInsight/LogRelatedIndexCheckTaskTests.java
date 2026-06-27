@@ -1,9 +1,13 @@
 package org.opensearch.ml.common.indexInsight;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.mock;
+import static org.opensearch.ml.common.MockitoTestHelper.anyActionListener;
+import static org.opensearch.ml.common.MockitoTestHelper.mockActionListener;
 import static org.opensearch.ml.common.indexInsight.IndexInsightTestHelper.mockMLConfigFailure;
 import static org.opensearch.ml.common.indexInsight.IndexInsightTestHelper.mockMLConfigSuccess;
 import static org.opensearch.ml.common.indexInsight.IndexInsightTestHelper.mockMLExecuteFailure;
@@ -16,9 +20,7 @@ import java.util.Map;
 import org.apache.lucene.search.TotalHits;
 import org.apache.lucene.search.TotalHits.Relation;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
@@ -32,10 +34,6 @@ import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.transport.client.Client;
 
 public class LogRelatedIndexCheckTaskTests {
-
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
-
     private Client client;
     private SdkClient sdkClient;
     private LogRelatedIndexCheckTask task;
@@ -64,11 +62,11 @@ public class LogRelatedIndexCheckTaskTests {
             when(resp.getHits()).thenReturn(hits);
             listener.onResponse(resp);
             return null;
-        }).when(client).search(any(), any(ActionListener.class));
+        }).when(client).search(any(), anyActionListener());
     }
 
     // parseCheckResponse declared method
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked") // reflection invoke returns Object; cast to Map for assertions
     private Map<String, Object> invokeParse(LogRelatedIndexCheckTask t, String resp) {
         try {
             Method method = LogRelatedIndexCheckTask.class.getDeclaredMethod("parseCheckResponse", String.class);
@@ -126,8 +124,7 @@ public class LogRelatedIndexCheckTaskTests {
             return null;
         }).when(client).search(any(SearchRequest.class), any());
 
-        @SuppressWarnings("unchecked")
-        ActionListener<String> listener = mock(ActionListener.class);
+        ActionListener<String> listener = mockActionListener();
 
         invokeCollect(task, listener);
 
@@ -142,8 +139,7 @@ public class LogRelatedIndexCheckTaskTests {
             return null;
         }).when(client).search(any(SearchRequest.class), any());
 
-        @SuppressWarnings("unchecked")
-        ActionListener<String> listener = mock(ActionListener.class);
+        ActionListener<String> listener = mockActionListener();
 
         invokeCollect(task, listener);
 
@@ -187,8 +183,7 @@ public class LogRelatedIndexCheckTaskTests {
             return null;
         }).when(client).search(any(SearchRequest.class), any());
 
-        @SuppressWarnings("unchecked")
-        ActionListener<String> listener = mock(ActionListener.class);
+        ActionListener<String> listener = mockActionListener();
 
         invokeCollect(task, listener);
 
@@ -208,8 +203,7 @@ public class LogRelatedIndexCheckTaskTests {
             return null;
         }).when(client).search(any(SearchRequest.class), any());
 
-        @SuppressWarnings("unchecked")
-        ActionListener<String> listener = mock(ActionListener.class);
+        ActionListener<String> listener = mockActionListener();
 
         invokeCollect(task, listener);
 
@@ -230,8 +224,7 @@ public class LogRelatedIndexCheckTaskTests {
             return null;
         }).when(client).search(any(SearchRequest.class), any());
 
-        @SuppressWarnings("unchecked")
-        ActionListener<String> listener = mock(ActionListener.class);
+        ActionListener<String> listener = mockActionListener();
 
         invokeCollect(task, listener);
 
@@ -245,9 +238,11 @@ public class LogRelatedIndexCheckTaskTests {
 
     @Test
     public void testCreatePrerequisiteTask_ThrowsException() {
-        exceptionRule.expect(IllegalStateException.class);
-        exceptionRule.expectMessage("LogRelatedIndexCheckTask has no prerequisites");
-        task.createPrerequisiteTask(MLIndexInsightType.STATISTICAL_DATA);
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> task.createPrerequisiteTask(MLIndexInsightType.STATISTICAL_DATA)
+        );
+        assertEquals("LogRelatedIndexCheckTask has no prerequisites", exception.getMessage());
     }
 
     @Test
@@ -262,7 +257,7 @@ public class LogRelatedIndexCheckTaskTests {
         // Mock update call for saveResult
         mockUpdateSuccess(sdkClient);
 
-        ActionListener<IndexInsight> listener = mock(ActionListener.class);
+        ActionListener<IndexInsight> listener = mockActionListener();
         task.runTask("tenant-id", listener);
 
         ArgumentCaptor<IndexInsight> captor = ArgumentCaptor.forClass(IndexInsight.class);
@@ -278,7 +273,7 @@ public class LogRelatedIndexCheckTaskTests {
         // Mock getAgentIdToRun
         mockMLConfigFailure(client, "Config not found");
 
-        ActionListener<IndexInsight> listener = mock(ActionListener.class);
+        ActionListener<IndexInsight> listener = mockActionListener();
         task.runTask("tenant-id", listener);
 
         ArgumentCaptor<IllegalStateException> captor = ArgumentCaptor.forClass(IllegalStateException.class);
@@ -296,7 +291,7 @@ public class LogRelatedIndexCheckTaskTests {
         mockUpdateSuccess(sdkClient);
         mockMLExecuteFailure(client, "ML execution failed");
 
-        ActionListener<IndexInsight> listener = mock(ActionListener.class);
+        ActionListener<IndexInsight> listener = mockActionListener();
         task.runTask("tenant-id", listener);
 
         ArgumentCaptor<RuntimeException> captor = ArgumentCaptor.forClass(RuntimeException.class);

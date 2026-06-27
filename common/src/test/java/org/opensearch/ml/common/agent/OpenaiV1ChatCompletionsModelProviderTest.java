@@ -6,6 +6,8 @@
 package org.opensearch.ml.common.agent;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,9 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.opensearch.ml.common.MLAgentType;
 import org.opensearch.ml.common.connector.Connector;
 import org.opensearch.ml.common.connector.HttpConnector;
@@ -32,9 +32,6 @@ import org.opensearch.ml.common.input.execute.agent.VideoContent;
 public class OpenaiV1ChatCompletionsModelProviderTest {
 
     private OpenaiV1ChatCompletionsModelProvider provider;
-
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
 
     @Before
     public void setUp() {
@@ -782,11 +779,12 @@ public class OpenaiV1ChatCompletionsModelProviderTest {
         AgentInput agentInput = new AgentInput();
         agentInput.setInput(blocks);
 
-        exceptionRule.expect(IllegalArgumentException.class);
-        exceptionRule.expectMessage("Input type not supported. Expected String, List<ContentBlock>, or List<Message>");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
 
-        // Act
-        provider.mapAgentInput(agentInput, MLAgentType.CONVERSATIONAL);
+            // Act
+            provider.mapAgentInput(agentInput, MLAgentType.CONVERSATIONAL);
+        });
+        assertEquals("Input type not supported. Expected String, List<ContentBlock>, or List<Message>", exception.getMessage());
     }
 
     @Test
@@ -796,11 +794,12 @@ public class OpenaiV1ChatCompletionsModelProviderTest {
         AgentInput agentInput = new AgentInput();
         agentInput.setInput(messages);
 
-        exceptionRule.expect(IllegalArgumentException.class);
-        exceptionRule.expectMessage("Input type not supported. Expected String, List<ContentBlock>, or List<Message>");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
 
-        // Act
-        provider.mapAgentInput(agentInput, MLAgentType.CONVERSATIONAL);
+            // Act
+            provider.mapAgentInput(agentInput, MLAgentType.CONVERSATIONAL);
+        });
+        assertEquals("Input type not supported. Expected String, List<ContentBlock>, or List<Message>", exception.getMessage());
     }
 
     @Test
